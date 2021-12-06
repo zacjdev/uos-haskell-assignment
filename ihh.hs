@@ -32,13 +32,11 @@ data EOBoard = EOBoard (Foundations, Columns, Reserves)
 -- board can be an SBoard or an EOBoard
 data Board = Board2 SBoard | Board EOBoard
 
+divide :: Integer -> Integer -> Double
+divide x y = fromIntegral x / fromIntegral y
 
-
-executeBoard :: Int -> [Int]
-executeBoard board = map (boardFromCardMoveToColumn board) (cardsThatCanMoveToColumn board)
-
-cardsThatCanMoveToColumn :: Board -> [Card]
-cardsThatCanMoveToColumn (Board1 (EOBoard (fs, cs, rs))) = filter isNotAceKing (filter (\c -> c `elem` (possibleMoveableCards(Board1 (EOBoard (fs, cs, rs))))) (filter (not.null) (map pCard (map (\c -> last c) cs))))
-
-boardFromCardMoveToColumn :: Card -> Board -> Board
-boardFromCardMoveToColumn card (Board1 (EOBoard (fs, cs, rs))) = Board1 (EOBoard (fs, cs, rs))
+analyseEO :: Int -> Int -> (Int, Int)
+analyseEO seed games = (wins, winrate)
+  where
+    wins = games
+    winrate = seed

@@ -7,6 +7,8 @@ stack ghci --package random
 -- Step 1: Initial Datatypes
 import System.Random
 import Data.List
+import Data.Int (Int)
+import Data.Maybe
 
 data Suit = Hearts | Diamonds | Clubs | Spades
   deriving (Eq, Show, Ord, Enum, Bounded)
@@ -182,7 +184,7 @@ isNotAceKing _ = True
 
 -- execute boardFromCardMoveToColumn on each result from cardsThatCanMoveToColumn
 findMoves :: Board -> [Board]
-findMoves board = map (boardFromCardMoveToColumn board) (cardsThatCanMoveToColumn board) ++ map (boardFromCardMoveToReserve board) (cardsThatCanMoveToReserve board) ++ map (boardFromKingMoveToEmptyColumn board) (kingsThatCanMoveToEmptyColumn board)
+findMoves board = map (boardFromCardMoveToColumn board) (cardsThatCanMoveToColumn board) ++ map (boardFromKingMoveToEmptyColumn board) (kingsThatCanMoveToEmptyColumn board) ++ map (boardFromCardMoveToReserve board) (cardsThatCanMoveToReserve board)
 
 
 cardsThatCanMoveToColumn :: Board -> [Card]
@@ -219,26 +221,40 @@ boardFromCardMoveToReserve (Board1 (EOBoard (fs, cs, rs))) card = (Board1 (EOBoa
   rs' = if length rs < 8 then card : (delete card rs) else rs
   fs' = fs
 
-
 -- Move king to empty
 -- Filter for boards after moving last of column to a foundation where a move could happen
 -- If none, filter for boards aafter moving last 2, then 3, etc of column to foundatiton could do something useful
 
 
 
+--chooseMove should ignore the "bad" moves
+chooseMove :: Board -> Maybe Board
+chooseMove board = if (not.null) (findMoves board) then Just (head (findMoves board)) else Nothing
+
+haveWon :: Board -> Bool
+haveWon board = (calculateScore board >= 52)
+
+-- Initial board, uses chooseMove to play the game to completion. Returns score
+playSolitaire :: Board -> Int
+playSolitaire board
+  | (chooseMove board) == Nothing = calculateScore board
+  | otherwise = playSolitaire (fromJust (chooseMove board))
+
+calculateScore :: Board -> Int
+calculateScore (Board1 (EOBoard (fs, cs, rs))) = sum (map length fs)
+
+-- seed, games to play, return 
+analyseEO :: Int -> Int -> (Int, Int)
+analyseEO seed games = (wins, winrate)
+  where
+    wins = length (filter (==52) (map playSolitaire (map eODeal [1..games])))
+    winrate = (wins * 100) `div` games
+
+-- divide two ints
+divide :: Int -> Int -> Int
+divide x y = x `div` y
 
 {-}
-map (\c -> if pCard card (last c) then c : card else c) cs
-
-
-boardFromMoveToColumn :: Board -> Card -> Board
-boardFromMoveToColumn (Board (EOBoard (fs, cs, rs))) card = Board (EOBoard (fs, cs', rs'))
-  where
-    cs' = map (delete card) cs
-    rs' = delete card rs
-
-
-possibleMoveableCards (Board (EOBoard (fs, cs, rs))) -- returns [Card]
 
 -- iterate, see if the card can move to a column
 
