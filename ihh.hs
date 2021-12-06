@@ -30,11 +30,15 @@ data SBoard = SBoard (Stock , SColumns, SFoundations)
 data EOBoard = EOBoard (Foundations, Columns, Reserves)
 
 -- board can be an SBoard or an EOBoard
-data Board = Board1 SBoard | Board2 EOBoard
-
-boardsFromMoveToColumn :: Board -> [Board]
-boardsFromMoveToColumn (Board2 (EOBoard (fs, cs, rs))) = []
+data Board = Board2 SBoard | Board EOBoard
 
 
 
+executeBoard :: Int -> [Int]
+executeBoard board = map (boardFromCardMoveToColumn board) (cardsThatCanMoveToColumn board)
 
+cardsThatCanMoveToColumn :: Board -> [Card]
+cardsThatCanMoveToColumn (Board1 (EOBoard (fs, cs, rs))) = filter isNotAceKing (filter (\c -> c `elem` (possibleMoveableCards(Board1 (EOBoard (fs, cs, rs))))) (filter (not.null) (map pCard (map (\c -> last c) cs))))
+
+boardFromCardMoveToColumn :: Card -> Board -> Board
+boardFromCardMoveToColumn card (Board1 (EOBoard (fs, cs, rs))) = Board1 (EOBoard (fs, cs, rs))

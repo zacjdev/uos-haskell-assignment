@@ -76,11 +76,9 @@ data SBoard = SBoard (Stock , SColumns, SFoundations)
 instance Show SBoard where
   show (SBoard (s, c, f)) = "Foundations:\n" ++ show f ++ "\nColumns:\n" ++ show c ++ "\nStock has " ++ show ((length s) `div` 10) ++ " deals left"
 
-
+data Board = Board1 EOBoard | Board2 SBoard
 
 data EOBoard = EOBoard (Foundations, Columns, Reserves)
-
-data Board = Board1 EOBoard | Board2 SBoard
 
 instance Show EOBoard where
   show (EOBoard (f, c, r)) = "Foundations:\n" ++ show f ++ "\nColumns:\n" ++ show c ++ "\nReserves:\n" ++ show r
@@ -163,10 +161,8 @@ sDeal n = SBoard (stock, columns, foundations)
 -- Part 2, Step 1: All possible moves for Eight-Off
 
 
-{-}
-findMoves :: Board -> [Board]
-findMoves (Board1 (EOBoard (fs, cs, rs))) = map toFoundations [boardsFromMoveToColumn(Board1 (EOBoard (fs, cs, rs)))]--, boardsFromMoveToReserve(Board1 (EOBoard (fs, cs, rs)))]
--}
+--, boardsFromMoveToReserve(Board1 (EOBoard (fs, cs, rs)))]
+
 -- add just the result of toFoundations
 
 -- cards that can move to a column function (from column or reserve) - INCLUDES KINGS
@@ -182,32 +178,46 @@ isNotAceKing _ = True
 --Find cards that can move from a column or reserve to another column, and do it. Check for infinite loop.
 
 -- Cards that can move from a reserve or column onto another column
-findCardsThatCanMove :: Board -> [Card]
-findCardsThatCanMove (Board1 (EOBoard (fs, cs, rs))) = filter isNotAceKing (filter (\c -> c `elem` (possibleMoveableCards(Board1 (EOBoard (fs, cs, rs))))) (filter (not.null) (map pCard (map (\c -> last c) cs))))
 
-boardFromCardMoveToColumn :: Card -> Board -> Board
-boardFromCardMoveToColumn card (Board1 (EOBoard (fs, cs, rs))) = (Board1 (EOBoard (fs', cs', rs')))
+
+-- execute boardFromCardMoveToColumn on each result from cardsThatCanMoveToColumn
+findMoves :: Board -> [Board]
+findMoves board = map (boardFromCardMoveToColumn board) (cardsThatCanMoveToColumn board) ++ map (boardFromCardMoveToReserve board) (cardsThatCanMoveToReserve board) ++ map (boardFromKingMoveToEmptyColumn board) (kingsThatCanMoveToEmptyColumn board)
+
+
+cardsThatCanMoveToColumn :: Board -> [Card]
+cardsThatCanMoveToColumn (Board1 (EOBoard (fs, cs, rs))) = filter isNotAceKing (filter (\c -> c `elem` (possibleMoveableCards(Board1 (EOBoard (fs, cs, rs))))) (filter (not.null) (map pCard (map (\c -> last c) cs))))
+
+boardFromCardMoveToColumn :: Board -> Card -> Board
+boardFromCardMoveToColumn (Board1 (EOBoard (fs, cs, rs))) card = (Board1 (EOBoard (fs', cs', rs')))
   where
     cs' = map (\c -> if sCard card == (last c) then c ++ [card] else c) (map (delete card) cs)
     rs' = delete card rs
     fs' = fs
-{-
-moveKingToEmptyColumn :: Card -> Board -> Board
-moveKingToEmptyColumn card (Board1 (EOBoard (fs, cs, rs)))
-  | (not.null) map isKing (possibleMoveableCards(Board1 (EOBoard (fs, cs, rs)))) = 
-  | otherwise = (Board1 (EOBoard (fs, cs, rs)))
 
+kingsThatCanMoveToEmptyColumn :: Board -> [Card]
+kingsThatCanMoveToEmptyColumn (Board1 (EOBoard (fs, cs, rs)))
+  | (not.null) (filter (null) cs) = filter isKing (possibleMoveableCards(Board1 (EOBoard (fs, cs, rs))))
+  | otherwise = []
+
+boardFromKingMoveToEmptyColumn :: Board -> Card -> Board
+boardFromKingMoveToEmptyColumn (Board1 (EOBoard (fs, cs, rs))) card = (Board1 (EOBoard (fs', cs', rs')))
   where
-    cs' = map (delete card) cs
-    rs' = if length rs < 8 then card : (delete card rs) else rs
     fs' = fs
--}
-boardFromCardMoveToReserve :: Card -> Board -> Board
-boardFromCardMoveToReserve card (Board1 (EOBoard (fs, cs, rs))) = (Board1 (EOBoard (fs, cs, rs')))
-  where
+    cs' = (filter (not.null) (map (delete card) cs)) ++ [[card]]
     rs' = delete card rs
-    cs' = map (\c -> if sCard card == (last c) then c ++ [card] else c) cs
-    fs' = fs
+
+cardsThatCanMoveToReserve :: Board -> [Card]
+cardsThatCanMoveToReserve (Board1 (EOBoard (fs, cs, rs)))
+  | length rs < 8 = possibleMoveableCards(Board1 (EOBoard (fs, cs, rs)))
+  | otherwise = []
+
+boardFromCardMoveToReserve :: Board -> Card -> Board
+boardFromCardMoveToReserve (Board1 (EOBoard (fs, cs, rs))) card = (Board1 (EOBoard (fs', cs', rs')))
+  where
+  cs' = map (delete card) cs
+  rs' = if length rs < 8 then card : (delete card rs) else rs
+  fs' = fs
 
 
 -- Move king to empty
