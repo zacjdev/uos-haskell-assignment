@@ -7,43 +7,33 @@ data Pip = Ace | Two | Three | Four | Five | Six | Seven | Eight | Nine | Ten | 
 newtype Card = Card (Suit, Pip)
   deriving (Eq, Show)
 
-newtype Deck = Deck [Card]
-  deriving (Eq, Show)
+type Foundations = [Deck]
 
-newtype Foundation = Foundation [Card]
-  deriving (Eq, Show)
+type Columns = [Deck]
 
-newtype Column = Column [Card]
-  deriving (Eq, Show)
+type Reserves = Deck
 
-newtype Reserve = Reserve [Card]
-  deriving (Eq, Show)
+type Deck = [Card]
 
-newtype Board = Board EOBoard-- | Board (SBoard)
-  deriving (Eq, Show)
+type SColumns = [SDeck]
 
-data EOBoard = EOBoard {foundations :: [Foundation], columns :: [Column], reserve :: Reserve}
-  deriving (Eq)
+type SFoundations = [SDeck]
 
-instance Show EOBoard where
-  show (EOBoard fs cs rs) = "Foundations: " ++ show fs ++ "\nColumns: " ++ show cs ++ "\nReserve: " ++ show rs
+type Stock = SDeck
 
-------------------------------------------------
-toFoundations :: EOBoard -> EOBoard
-toFoundations board = toFoundations' board EOBoard {foundations = foundations board, columns = columns board, reserve = reserve board}
-  where
-      --                temp       save to    output
-    toFoundations' :: EOBoard -> EOBoard -> EOBoard
-    toFoundations' board@(EOBoard fs cs rs) board'@(EOBoard fs' cs' rs')
-        
+data SCard = SCard (Suit, Pip, Bool)
 
+type SDeck = [SCard]
 
+data SBoard = SBoard (Stock , SColumns, SFoundations)
 
+data EOBoard = EOBoard (Foundations, Columns, Reserves)
 
+-- board can be an SBoard or an EOBoard
+data Board = Board1 SBoard | Board2 EOBoard
 
-
-
-
+boardsFromMoveToColumn :: Board -> [Board]
+boardsFromMoveToColumn (Board2 (EOBoard (fs, cs, rs))) = []
 
 
 
